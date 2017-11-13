@@ -11,21 +11,27 @@ public class Login : MonoBehaviour {
 
 	public Text userNameTextBox;
 	public Text passwordTextBox;
+	public Text loginStatus;
 
-	public Button LoginGo;
+	public Button[] buttons;
+
+	public GameObject SignUpWindow;
+	public GameObject thisWindow;
 
 	string LoginURL = "http://demonblaster.000webhostapp.com/Login.php";
 
 	void Start ()
 	{
-		LoginGo.onClick.AddListener(TaskOnClick);
+		for (int i = 0; i < buttons.Length; i++)
+		{
+			int closureIndex = i; // Prevents the closure problem
+			buttons[closureIndex].onClick.AddListener(() => TaskOnClick(closureIndex));
+		}
 	}
 	
 
 	void Update ()
 	{
-		//if (Input.GetKeyDown(KeyCode.L)) StartCoroutine(LoginToDB(inputUserName, inputPassword));
-
 		inputUserName = userNameTextBox.text.ToString();
 		inputPassword = passwordTextBox.text.ToString();
 	}
@@ -38,12 +44,41 @@ public class Login : MonoBehaviour {
 
 		WWW www = new WWW(LoginURL, form);
 		yield return www;
+		if (www != null)
+		{
+			loginStatus.text = www.text.ToString();
+			StartCoroutine(GetUserID());
+		}
+		else
+		{
+			loginStatus.text = "user not found";
+		}
 		print(www.text);
 	}
 
-	void TaskOnClick()
+	void TaskOnClick(int buttonIndex)
 	{
-		StartCoroutine(LoginToDB(inputUserName, inputPassword));
-		Debug.Log("You have clicked the button!");
+		switch (buttonIndex)
+		{
+			case 0: //LOGIN
+			StartCoroutine(LoginToDB(inputUserName, inputPassword));
+			break;
+
+			case 1://SIGNUP
+			SignUpWindow.gameObject.SetActive(true);
+			thisWindow.gameObject.SetActive(false);
+			break;
+		}
+	}
+
+	IEnumerator GetUserID()
+	{
+		WWWForm idform = new WWWForm();
+		idform.AddField("usernamePost", inputUserName);
+
+		WWW myID = new WWW("http://demonblaster.000webhostapp.com/GetUserID.php",idform);
+		yield return myID;
+		string myIDString = myID.text;
+		print("ID: "+myIDString);
 	}
 }
